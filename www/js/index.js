@@ -29,6 +29,9 @@ function onDeviceReady() {
     // Vincular funciones para gestionar eventos de pausa y reanudación
     document.addEventListener("pause", onPause, false);
     document.addEventListener("resume", onResume, false);
+
+    // Vincular función para gestionar el evento antes de cerrar la aplicación
+    window.addEventListener("beforeunload", onBeforeUnload, false);
 }
 
 function init() {
@@ -113,4 +116,9 @@ function onPause() {
 function onResume() {
     // Al reanudar la aplicación, cargar las tareas
     loadTasks();
+}
+
+function onBeforeUnload() {
+    // Antes de cerrar la aplicación, guardar las tareas
+    saveTasks();
 }

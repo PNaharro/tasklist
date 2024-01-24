@@ -22,38 +22,95 @@
 document.addEventListener('deviceready', onDeviceReady, false);
 
 function onDeviceReady() {
-    // Cordova is now initialized. Have fun!
-
     console.log('Running cordova-' + cordova.platformId + '@' + cordova.version);
-    //document.getElementById('deviceready').classList.add('ready');
     init();
+    loadTasks(); // Cargar tareas almacenadas al inicio
+
+    // Vincular funciones para gestionar eventos de pausa y reanudación
+    document.addEventListener("pause", onPause, false);
+    document.addEventListener("resume", onResume, false);
 }
 
-function init(){
+function init() {
     // Vincular la función addTask al nuevo botón en la página1
     $("#addTaskPage1").click(addTask);
 }
 
-function addTask(){
-    // Solicitar al usuario el nuevo nombre para la tarea
+function addTask() {
     var newTaskName = prompt("Introduce el nuevo nombre de la tarea:");
 
-    if (newTaskName !== null) {  // Verificar si el usuario ha introducido un nombre
-        var newElem = $("<li>").text(newTaskName);  // Usar el nuevo nombre en lugar de "new element"
-        var button = $("<button>X</button>").click(function(){
-            // Eliminar el elemento de la lista al hacer clic en el botón de eliminar
-            $(this).parent().remove();
-            // Actualizar el listview para aplicar los estilos
-            $('ul').listview("refresh");
+    if (newTaskName !== null) {
+        var newElem = $("<li>").text(newTaskName);
+        var editButton = $("<button>Edit</button>").click(function () {
+            var updatedTaskName = prompt("Edita la tarea:", $(this).siblings('span').text());
+            if (updatedTaskName !== null) {
+                $(this).siblings('span').text(updatedTaskName);
+                $('ul').listview("refresh");
+                saveTasks();
+            }
         });
 
-        // Agregar el botón de eliminar al elemento de la lista
-        newElem.append(button);
+        var deleteButton = $("<button>Delete</button>").click(function () {
+            $(this).parent().remove();
+            $('ul').listview("refresh");
+            saveTasks();
+        });
 
-        // Agregar el elemento de la lista al final de la lista
+        newElem.append("<span>" + newTaskName + "</span>");
+        newElem.append(editButton);
+        newElem.append(deleteButton);
+
         $('ul').append(newElem);
+        $('ul').listview("refresh");
 
-        // Actualizar el listview para aplicar los estilos
+        saveTasks();
+    }
+}
+
+function saveTasks() {
+    var tasks = [];
+    $('ul li span').each(function () {
+        tasks.push($(this).text());
+    });
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function loadTasks() {
+    var storedTasks = localStorage.getItem('tasks');
+    if (storedTasks) {
+        var tasks = JSON.parse(storedTasks);
+        tasks.forEach(function (task) {
+            var newElem = $("<li>").append("<span>" + task + "</span>");
+            var editButton = $("<button>Edit</button>").click(function () {
+                var updatedTaskName = prompt("Edita la tarea:", $(this).siblings('span').text());
+                if (updatedTaskName !== null) {
+                    $(this).siblings('span').text(updatedTaskName);
+                    $('ul').listview("refresh");
+                    saveTasks();
+                }
+            });
+
+            var deleteButton = $("<button>Delete</button>").click(function () {
+                $(this).parent().remove();
+                $('ul').listview("refresh");
+                saveTasks();
+            });
+
+            newElem.append(editButton);
+            newElem.append(deleteButton);
+            $('ul').append(newElem);
+        });
+
         $('ul').listview("refresh");
     }
+}
+
+function onPause() {
+    // Al suspender la aplicación, guardar las tareas
+    saveTasks();
+}
+
+function onResume() {
+    // Al reanudar la aplicación, cargar las tareas
+    loadTasks();
 }
